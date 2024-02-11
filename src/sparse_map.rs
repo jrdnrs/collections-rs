@@ -146,16 +146,16 @@ impl<T> SparseMap<T> {
         }
     }
 
-    pub fn values(&self) -> impl Iterator<Item = &T> {
-        self.items.iter()
+    pub fn values(&self) -> &[T] {
+        self.items.as_slice()
     }
 
-    pub fn values_mut(&mut self) -> impl Iterator<Item = &mut T> {
-        self.items.iter_mut()
+    pub fn values_mut(&mut self) -> &mut [T] {
+        self.items.as_mut_slice()
     }
 
-    pub fn keys(&self) -> impl Iterator<Item = &usize> {
-        self.keys.iter()
+    pub fn keys(&self) -> &[usize] {
+        self.keys.as_slice()
     }
 }
 
