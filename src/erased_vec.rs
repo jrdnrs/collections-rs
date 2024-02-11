@@ -17,6 +17,7 @@ pub struct Ptr<'a> {
 }
 
 impl<'a> Ptr<'a> {
+    #[inline]
     pub fn new(inner: NonNull<u8>) -> Self {
         Self {
             inner,
@@ -24,6 +25,7 @@ impl<'a> Ptr<'a> {
         }
     }
 
+    #[inline]
     pub fn as_ptr(self) -> *mut u8 {
         self.inner.as_ptr()
     }
@@ -31,6 +33,7 @@ impl<'a> Ptr<'a> {
     /// # Safety
     /// The caller must ensure that:
     /// - The pointer is aligned to the type `T`
+    #[inline]
     pub unsafe fn as_ref<T>(self) -> &'a T {
         &*(self.inner.as_ptr() as *const T)
     }
@@ -38,10 +41,12 @@ impl<'a> Ptr<'a> {
     /// # Safety
     /// The caller must ensure that:
     /// - The pointer is aligned to the type `T`
+    #[inline]
     pub unsafe fn as_mut<T>(self) -> &'a mut T {
         &mut *(self.inner.as_ptr() as *mut T)
     }
 
+    #[inline]
     pub fn is_aligned<T>(&self) -> bool {
         self.inner
             .as_ptr()
@@ -55,6 +60,7 @@ impl<'a> Ptr<'a> {
     /// - The pointer is aligned to the type `T`
     /// - The data that the pointer points to is valid when interpreted as `T`, as the associated
     ///   destructor will be called.
+    #[inline]
     pub unsafe fn drop_as<T>(self) {
         debug_assert!(self.is_aligned::<T>());
 
@@ -126,20 +132,24 @@ pub struct ErasedVec {
 }
 
 impl ErasedVec {
+    #[inline]
     pub fn new<T: 'static>() -> Self {
         Self::with_capacity::<T>(DEFAULT_CAPACITY)
     }
 
+    #[inline]
     pub fn with_capacity<T: 'static>(capacity: usize) -> Self {
         let item = ErasedType::new::<T>();
 
         Self::with_capacity_erased_type(item, capacity)
     }
 
+    #[inline]
     pub fn from_erased_type(item: ErasedType) -> Self {
         Self::with_capacity_erased_type(item, DEFAULT_CAPACITY)
     }
 
+    #[inline]
     pub fn with_capacity_erased_type(item: ErasedType, capacity: usize) -> Self {
         // TODO: ZST support
         if capacity == 0 {
@@ -161,14 +171,17 @@ impl ErasedVec {
         }
     }
 
+    #[inline]
     pub fn len(&self) -> usize {
         self.len
     }
 
+    #[inline]
     pub fn capacity(&self) -> usize {
         self.capacity
     }
 
+    #[inline]
     pub fn erased_type(&self) -> &ErasedType {
         &self.item
     }
@@ -178,6 +191,7 @@ impl ErasedVec {
     /// - The pointer is aligned to the type that this vec was created with.
     /// - The pointer is actually valid for reading a value of the type.
     /// - The pointer should not, for some reason, represent the end (len-wise) of this vec.
+    #[inline]
     pub unsafe fn push(&mut self, value: Ptr) {
         // TODO: ZST support
         self.reserve(1);
@@ -198,6 +212,7 @@ impl ErasedVec {
         self.len += 1;
     }
 
+    #[inline]
     pub unsafe fn push_many(&mut self, values: Ptr, count: usize) {
         // TODO: ZST support
         self.reserve(count);
@@ -217,6 +232,7 @@ impl ErasedVec {
     /// The caller must ensure that:
     /// - The data associated with this pointer is **not** dropped, as the vec will continue to hold a reference
     ///   to it.
+    #[inline]
     pub unsafe fn get(&self, index: usize) -> Option<Ptr> {
         if index < self.len {
             // SAFETY: self.len is within bounds
@@ -231,6 +247,7 @@ impl ErasedVec {
     /// - The data associated with this pointer is **not** dropped, as the vec will continue to hold a reference
     ///   to it.
     /// - The index is within the bounds of the vec.
+    #[inline]
     pub unsafe fn get_unchecked(&self, index: usize) -> Ptr {
         // SAFETY: Bounds check deferred to the caller.
         unsafe { Ptr::from(self.head.as_ptr().add(index * self.item.layout.size())) }
@@ -240,6 +257,7 @@ impl ErasedVec {
     /// The caller must ensure that:
     /// - The data associated with this pointer **is** dropped appropriately if necessary, by calling `dispose`
     ///   on the vec. Not doing so will potentially leak memory, as the vec will no longer track this item.
+    #[inline]
     pub unsafe fn pop(&mut self) -> Option<Ptr> {
         if self.len > 0 {
             self.len -= 1;
@@ -254,6 +272,7 @@ impl ErasedVec {
     /// The caller must ensure that:
     /// - The data associated with this pointer **is** dropped appropriately if necessary, by calling `dispose`
     ///   on the vec. Not doing so will potentially leak memory, as the vec will no longer track this item.
+    #[inline]
     pub unsafe fn pop_many(&mut self, count: usize) -> Option<Ptr> {
         if self.len >= count {
             self.len -= count;
@@ -269,6 +288,7 @@ impl ErasedVec {
     /// - The vec is not empty, as no bounds checking is done.
     /// - The data associated with this pointer **is** dropped appropriately if necessary, by calling `dispose`
     ///   on the vec. Not doing so will potentially leak memory, as the vec will no longer track this item.
+    #[inline]
     pub unsafe fn pop_unchecked(&mut self) -> Ptr {
         self.len -= 1;
         // SAFETY: Just decremented self.len, so this is fine as it effectively gets the last element.
@@ -279,6 +299,7 @@ impl ErasedVec {
     /// The caller must ensure that:
     /// - The data associated with this pointer **is** dropped appropriately if necessary, by calling `dispose`
     ///   on the vec. Not doing so will potentially leak memory, as the vec will no longer track this item.
+    #[inline]
     pub unsafe fn swap_remove(&mut self, index: usize) -> Option<Ptr> {
         if index < self.len {
             // SAFETY: index is within bounds
@@ -294,6 +315,7 @@ impl ErasedVec {
     /// - The index is within the bounds of the vec.
     /// - The data associated with this pointer **is** dropped appropriately if necessary, by calling `dispose`
     ///   on the vec. Not doing so will potentially leak memory, as the vec will no longer track this item.
+    #[inline]
     pub unsafe fn swap_remove_unchecked(&mut self, index: usize) -> Ptr {
         // TODO: think of better way to handle potential swap with self
         if index == self.len - 1 {
@@ -327,6 +349,7 @@ impl ErasedVec {
     /// # Safety
     /// The caller must ensure that:
     /// - Any existing pointers to the data are not used after this.
+    #[inline]
     pub unsafe fn clear(&mut self) {
         for i in 0..self.len {
             // SAFETY: `self.len` is within bounds
@@ -341,6 +364,7 @@ impl ErasedVec {
     /// # Safety
     /// The caller must ensure that:
     /// - 'T' actually has the same size and alignment as the item type of this vec.
+    #[inline]
     pub unsafe fn as_slice<T>(&self) -> &[UnsafeCell<T>] {
         unsafe { core::slice::from_raw_parts(self.head.as_ptr().cast::<UnsafeCell<T>>(), self.len) }
     }
