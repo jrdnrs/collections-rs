@@ -199,6 +199,11 @@ impl ErasedVec {
         &self.item
     }
 
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.len == 0
+    }
+
     /// # Safety
     /// The caller must ensure that:
     /// - The pointer is aligned to the type that this vec was created with.
@@ -225,6 +230,11 @@ impl ErasedVec {
         self.len += 1;
     }
 
+    /// # Safety
+    /// The caller must ensure that:
+    /// - The pointer is aligned to the type that this vec was created with.
+    /// - The pointer is actually valid for reading a value of the type.
+    /// - The pointer should not, for some reason, represent the end (len-wise) of this vec.
     #[inline]
     pub unsafe fn push_many(&mut self, values: Ptr, count: usize) {
         // TODO: ZST support

@@ -16,6 +16,18 @@ impl<T, const N: usize> FixedVec<T, N> {
         }
     }
 
+    pub fn clear(&mut self) {
+        self.len = 0;
+    }
+
+    pub fn len(&self) -> usize {
+        self.len
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len == 0
+    }
+
     pub fn push(&mut self, value: T) {
         if self.len == N {
             panic!("StackVec is full");
@@ -45,14 +57,6 @@ impl<T, const N: usize> FixedVec<T, N> {
         self.data.swap(index, self.len);
 
         return Some(unsafe { self.data[self.len].assume_init_read() });
-    }
-
-    pub fn clear(&mut self) {
-        self.len = 0;
-    }
-
-    pub fn len(&self) -> usize {
-        self.len
     }
 
     pub fn iter(&self) -> core::slice::Iter<T> {
@@ -117,6 +121,12 @@ impl<T, const N: usize> FixedVec<T, N> {
 
     pub fn as_mut_slice(&mut self) -> &mut [T] {
         unsafe { transmute(&mut self.data[0..self.len]) }
+    }
+}
+
+impl<T, const N: usize> Default for FixedVec<T, N> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

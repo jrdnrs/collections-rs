@@ -1,12 +1,3 @@
-pub struct SparseMap<T> {
-    /// A packed collection of stored items.
-    items: Vec<T>,
-    /// A packed collection of keys that correspond to each stored item.
-    keys: Vec<usize>,
-    /// The layer of indirection. Index into this using a key, to get the index for the items/keys collections.
-    indices: Vec<Index>,
-}
-
 #[derive(Clone, Copy)]
 enum Index {
     Free,
@@ -28,6 +19,15 @@ impl Index {
             _ => core::hint::unreachable_unchecked(),
         }
     }
+}
+
+pub struct SparseMap<T> {
+    /// A packed collection of stored items.
+    items: Vec<T>,
+    /// A packed collection of keys that correspond to each stored item.
+    keys: Vec<usize>,
+    /// The layer of indirection. Index into this using a key, to get the index for the items/keys collections.
+    indices: Vec<Index>,
 }
 
 impl<T> SparseMap<T> {
@@ -166,6 +166,12 @@ impl<T> SparseMap<T> {
     #[inline]
     pub fn keys(&self) -> &[usize] {
         self.keys.as_slice()
+    }
+}
+
+impl<T> Default for SparseMap<T> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

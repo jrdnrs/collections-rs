@@ -211,6 +211,12 @@ impl<T> Store<T> {
     }
 }
 
+impl<T> Default for Store<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
