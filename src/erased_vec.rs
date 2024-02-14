@@ -417,7 +417,7 @@ impl ErasedVec {
     /// The caller must ensure that:
     /// - 'T' actually has the same size and alignment as the item type of this vec.
     #[inline]
-    pub fn as_slice<T>(&self) -> &[T] {
+    pub unsafe fn as_slice<T>(&self) -> &[T] {
         unsafe { core::slice::from_raw_parts(self.head.as_ptr().cast::<T>(), self.len) }
     }
 
@@ -425,7 +425,7 @@ impl ErasedVec {
     /// The caller must ensure that:
     /// - 'T' actually has the same size and alignment as the item type of this vec.
     #[inline]
-    pub fn as_slice_mut<T>(&mut self) -> &mut [T] {
+    pub unsafe fn as_slice_mut<T>(&mut self) -> &mut [T] {
         unsafe { core::slice::from_raw_parts_mut(self.head.as_ptr().cast::<T>(), self.len) }
     }
 
