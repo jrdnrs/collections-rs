@@ -69,18 +69,21 @@ impl<'a> Ptr<'a> {
 }
 
 impl<'a, T> From<NonNull<T>> for Ptr<'a> {
+    #[inline]
     fn from(inner: NonNull<T>) -> Self {
         Self::new(inner.cast::<u8>())
     }
 }
 
 impl<'a, T> From<&'a mut T> for Ptr<'a> {
+    #[inline]
     fn from(inner: &'a mut T) -> Self {
         Self::new(NonNull::from(inner).cast::<u8>())
     }
 }
 
 impl<'a, T> From<*mut T> for Ptr<'a> {
+    #[inline]
     fn from(inner: *mut T) -> Self {
         Self::new(NonNull::new(inner.cast::<u8>()).expect("Null pointer"))
     }
@@ -113,6 +116,7 @@ impl ErasedType {
     /// # Safety
     /// The caller must ensure that:
     /// - Any aliases of this pointer are not used after calling this function.
+    #[inline]
     pub unsafe fn dispose(&self, ptr: Ptr) {
         (self.drop)(ptr);
     }
@@ -343,7 +347,7 @@ impl ErasedVec {
             core::ptr::swap_nonoverlapping(end.as_ptr(), middle.as_ptr(), self.item.layout.size())
         };
 
-        return end;
+        end
     }
 
     /// # Safety
@@ -369,6 +373,7 @@ impl ErasedVec {
         unsafe { core::slice::from_raw_parts(self.head.as_ptr().cast::<UnsafeCell<T>>(), self.len) }
     }
 
+    #[inline]
     unsafe fn reserve(&mut self, additional: usize) {
         let required = self.len + additional;
         if required > self.capacity {
