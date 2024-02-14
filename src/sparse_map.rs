@@ -52,6 +52,7 @@ impl<T> SparseMap<T> {
         }
     }
 
+    #[inline]
     pub fn get(&self, key: usize) -> Option<&T> {
         if let Index::Used(index) = self.get_index(key) {
             Some(&self.items[index])
@@ -65,6 +66,7 @@ impl<T> SparseMap<T> {
     ///   the `items` collection. Thus, the key must be within bounds of the `indices` collection.
     /// - In addition, the index it resolves to must be within bounds of the `items` collection, which can
     ///   only be guaranteed if you have inserted an item at that index, and have not removed it.
+    #[inline]
     pub unsafe fn get_unchecked(&self, key: usize) -> &T {
         debug_assert!(key < self.indices.len(), "Key out of bounds");
 
@@ -77,6 +79,7 @@ impl<T> SparseMap<T> {
         unsafe { self.items.get_unchecked(index) }
     }
 
+    #[inline]
     pub fn get_mut(&mut self, key: usize) -> Option<&mut T> {
         if let Index::Used(index) = self.get_index(key) {
             Some(&mut self.items[index])
@@ -90,6 +93,7 @@ impl<T> SparseMap<T> {
     ///   the `items` collection. Thus, the key must be within bounds of the `indices` collection.
     /// - In addition, the index it resolves to must be within bounds of the `items` collection, which can
     ///   only be guaranteed if you have inserted an item at that index, and have not removed it.
+    #[inline]
     pub unsafe fn get_mut_unchecked(&mut self, key: usize) -> &mut T {
         debug_assert!(key < self.indices.len(), "Key out of bounds");
 
@@ -102,6 +106,7 @@ impl<T> SparseMap<T> {
         unsafe { self.items.get_unchecked_mut(index) }
     }
 
+    #[inline]
     pub fn insert(&mut self, key: usize, item: T) {
         match self.get_index(key) {
             Index::Used(index) => {
@@ -123,6 +128,7 @@ impl<T> SparseMap<T> {
         }
     }
 
+    #[inline]
     pub fn remove(&mut self, key: usize) -> Option<T> {
         if let Index::Used(index) = self.get_index(key) {
             let item = self.items.swap_remove(index);
@@ -138,6 +144,7 @@ impl<T> SparseMap<T> {
         }
     }
 
+    #[inline]
     pub fn contains_key(&self, key: usize) -> bool {
         if let Index::Used(_) = self.get_index(key) {
             true
@@ -146,14 +153,17 @@ impl<T> SparseMap<T> {
         }
     }
 
+    #[inline]
     pub fn values(&self) -> &[T] {
         self.items.as_slice()
     }
 
+    #[inline]
     pub fn values_mut(&mut self) -> &mut [T] {
         self.items.as_mut_slice()
     }
 
+    #[inline]
     pub fn keys(&self) -> &[usize] {
         self.keys.as_slice()
     }
