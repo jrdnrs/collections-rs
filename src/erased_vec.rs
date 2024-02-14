@@ -417,7 +417,23 @@ impl ErasedVec {
     /// The caller must ensure that:
     /// - 'T' actually has the same size and alignment as the item type of this vec.
     #[inline]
-    pub unsafe fn as_slice<T>(&self) -> &[UnsafeCell<T>] {
+    pub fn as_slice<T>(&self) -> &[T] {
+        unsafe { core::slice::from_raw_parts(self.head.as_ptr().cast::<T>(), self.len) }
+    }
+
+    /// # Safety
+    /// The caller must ensure that:
+    /// - 'T' actually has the same size and alignment as the item type of this vec.
+    #[inline]
+    pub fn as_slice_mut<T>(&mut self) -> &mut [T] {
+        unsafe { core::slice::from_raw_parts_mut(self.head.as_ptr().cast::<T>(), self.len) }
+    }
+
+    /// # Safety
+    /// The caller must ensure that:
+    /// - 'T' actually has the same size and alignment as the item type of this vec.
+    #[inline]
+    pub unsafe fn as_slice_unsafe_cell<T>(&self) -> &[UnsafeCell<T>] {
         unsafe { core::slice::from_raw_parts(self.head.as_ptr().cast::<UnsafeCell<T>>(), self.len) }
     }
 
@@ -597,7 +613,7 @@ mod tests {
         assert_eq!(vec.len(), 10);
         assert_eq!(vec.capacity(), 16);
 
-        let slice = vec.as_slice::<i32>();
+        let slice = vec.as_slice_unsafe_cell::<i32>();
 
         assert_eq!(slice.len(), 10);
 
