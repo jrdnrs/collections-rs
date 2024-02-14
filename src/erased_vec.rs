@@ -66,6 +66,15 @@ impl<'a> Ptr<'a> {
 
         self.as_ptr().cast::<T>().drop_in_place();
     }
+
+    /// For internal use only
+    #[inline]
+    unsafe fn extend_lifetime<'b>(self) -> Ptr<'b> {
+        Ptr {
+            inner: self.inner,
+            _marker: PhantomData,
+        }
+    }
 }
 
 impl<'a, T> From<NonNull<T>> for Ptr<'a> {
@@ -348,6 +357,35 @@ impl ErasedVec {
         };
 
         end
+    }
+
+    /// # Safety
+    /// The caller must ensure that:
+    /// - Any existing pointers to the data are not used after this.
+    #[inline]
+    pub unsafe fn swap_remove_drop(&mut self, index: usize) {
+        if index < self.len {
+            // SAFETY: index is within bounds, and the item is being dropped immediately
+            let ptr = unsafe { self.swap_remove_unchecked(index).extend_lifetime() };
+            // SAFETY: `item` is not used after this call
+            unsafe {
+                self.item.dispose(ptr);
+            }
+        }
+    }
+
+    /// # Safety
+    /// The caller must ensure that:
+    /// - The index is within the bounds of the vec.
+    /// - Any existing pointers to the data are not used after this.
+    #[inline]
+    pub unsafe fn swap_remove_drop_unchecked(&mut self, index: usize) {
+        // SAFETY: dropped immediately
+        let ptr = unsafe { self.swap_remove_unchecked(index).extend_lifetime() };
+        // SAFETY: `item` is not used after this call
+        unsafe {
+            self.item.dispose(ptr);
+        }
     }
 
     /// # Safety
