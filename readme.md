@@ -14,3 +14,6 @@ Uses keys to a sparse vec as layer of indirection to a dense vec
 
 #### Store
 Dense vec with reuse of empty slots using generational indices
+
+#### Queue
+Simple queue using a fixed length array
