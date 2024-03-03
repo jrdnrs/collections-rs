@@ -1,5 +1,5 @@
 use core::{
-    mem::{transmute, MaybeUninit},
+    mem::MaybeUninit,
     ops::{Index, IndexMut},
 };
 
@@ -11,32 +11,42 @@ pub struct FixedVec<T, const N: usize> {
 impl<T, const N: usize> FixedVec<T, N> {
     pub fn new() -> Self {
         Self {
-            data: unsafe { MaybeUninit::uninit().assume_init() },
+            data: core::array::from_fn(|_| MaybeUninit::uninit()),
             len: 0,
         }
     }
 
+    #[inline]
     pub fn clear(&mut self) {
         self.len = 0;
     }
 
+    #[inline]
     pub fn len(&self) -> usize {
         self.len
     }
 
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.len == 0
     }
 
+    /// # Panics
+    /// Panics if the stack is full
+    #[inline]
     pub fn push(&mut self, value: T) {
         if self.len == N {
             panic!("StackVec is full");
         }
 
-        self.data[self.len] = MaybeUninit::new(value);
+        // SAFETY: We know that the length is less than the capacity
+        unsafe {
+            *self.data.get_unchecked_mut(self.len) = MaybeUninit::new(value);
+        }
         self.len += 1;
     }
 
+    #[inline]
     pub fn pop(&mut self) -> Option<T> {
         if self.len == 0 {
             return None;
@@ -44,9 +54,11 @@ impl<T, const N: usize> FixedVec<T, N> {
 
         self.len -= 1;
 
-        return Some(unsafe { self.data[self.len].assume_init_read() });
+        // SAFETY: `self.len` here is always less than `N` and at least 0 after decrementing
+        Some(unsafe { self.data.get_unchecked_mut(self.len).assume_init_read() })
     }
 
+    #[inline]
     pub fn swap_remove(&mut self, index: usize) -> Option<T> {
         if index >= self.len {
             return None;
@@ -56,71 +68,88 @@ impl<T, const N: usize> FixedVec<T, N> {
 
         self.data.swap(index, self.len);
 
-        return Some(unsafe { self.data[self.len].assume_init_read() });
+        // SAFETY: `self.len` here is always less than `N` and at least 0 after decrementing
+        Some(unsafe { self.data.get_unchecked_mut(self.len).assume_init_read() })
     }
 
+    #[inline]
     pub fn iter(&self) -> core::slice::Iter<T> {
         self.as_slice().iter()
     }
 
+    #[inline]
     pub fn iter_mut(&mut self) -> core::slice::IterMut<T> {
         self.as_mut_slice().iter_mut()
     }
 
+    #[inline]
     pub fn get(&self, index: usize) -> Option<&T> {
         if index >= self.len {
             return None;
         }
 
-        return Some(unsafe { self.data[index].assume_init_ref() });
+        // SAFETY: Confirmed `index` is less than `self.len`
+        Some(unsafe { self.data.get_unchecked(index).assume_init_ref() })
     }
 
+    #[inline]
     pub unsafe fn get_unchecked(&self, index: usize) -> &T {
-        self.data[index].assume_init_ref()
+        self.data.get_unchecked(index).assume_init_ref()
     }
 
+    #[inline]
     pub fn get_mut(&mut self, index: usize) -> Option<&mut T> {
         if index >= self.len {
             return None;
         }
 
-        return Some(unsafe { self.data[index].assume_init_mut() });
+        // SAFETY: Confirmed `index` is less than `self.len`
+        Some(unsafe { self.data.get_unchecked_mut(index).assume_init_mut() })
     }
 
+    #[inline]
     pub unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T {
-        self.data[index].assume_init_mut()
+        self.data.get_unchecked_mut(index).assume_init_mut()
     }
 
+    #[inline]
     pub fn last(&self) -> Option<&T> {
         if self.len == 0 {
             return None;
         }
 
-        return Some(unsafe { self.data[self.len - 1].assume_init_ref() });
+        // SAFETY: `self.len` is always less than `N` and at least 0 after decrementing
+        Some(unsafe { self.data.get_unchecked(self.len - 1).assume_init_ref() })
     }
 
+    #[inline]
     pub unsafe fn last_unchecked(&self) -> &T {
-        self.data[self.len - 1].assume_init_ref()
+        self.data.get_unchecked(self.len - 1).assume_init_ref()
     }
 
+    #[inline]
     pub fn last_mut(&mut self) -> Option<&mut T> {
         if self.len == 0 {
             return None;
         }
 
-        return Some(unsafe { self.data[self.len - 1].assume_init_mut() });
+        // SAFETY: `self.len` is always less than `N` and at least 0 after decrementing
+        Some(unsafe { self.data.get_unchecked_mut(self.len - 1).assume_init_mut() })
     }
 
+    #[inline]
     pub unsafe fn last_unchecked_mut(&mut self) -> &mut T {
-        self.data[self.len - 1].assume_init_mut()
+        self.data.get_unchecked_mut(self.len - 1).assume_init_mut()
     }
 
+    #[inline]
     pub fn as_slice(&self) -> &[T] {
-        unsafe { transmute(&self.data[0..self.len]) }
+        unsafe { core::slice::from_raw_parts(self.data.as_ptr() as *const T, self.len) }
     }
 
+    #[inline]
     pub fn as_mut_slice(&mut self) -> &mut [T] {
-        unsafe { transmute(&mut self.data[0..self.len]) }
+        unsafe { core::slice::from_raw_parts_mut(self.data.as_mut_ptr() as *mut T, self.len) }
     }
 }
 
@@ -133,12 +162,14 @@ impl<T, const N: usize> Default for FixedVec<T, N> {
 impl<T, const N: usize> Index<usize> for FixedVec<T, N> {
     type Output = T;
 
+    #[inline]
     fn index(&self, index: usize) -> &Self::Output {
         self.get(index).unwrap()
     }
 }
 
 impl<T, const N: usize> IndexMut<usize> for FixedVec<T, N> {
+    #[inline]
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         self.get_mut(index).unwrap()
     }
