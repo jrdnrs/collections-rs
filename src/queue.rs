@@ -1,4 +1,5 @@
 use core::mem::MaybeUninit;
+use std::ops::{Index, IndexMut};
 
 pub struct Queue<T, const N: usize> {
     data: [MaybeUninit<T>; N],
@@ -49,6 +50,40 @@ impl<T, const N: usize> Queue<T, N> {
             core::ptr::drop_in_place(first);
             core::ptr::drop_in_place(second);
         }
+    }
+
+    #[inline]
+    pub fn get(&self, index: usize) -> Option<&T> {
+        if index >= self.len() {
+            return None;
+        }
+
+        let index = (self.head + index) & self.index_mask;
+        // SAFETY: Due to mask, index is always in bounds
+        Some(unsafe { self.data.get_unchecked(index).assume_init_ref() })
+    }
+
+    #[inline]
+    pub unsafe fn get_unchecked(&self, index: usize) -> &T {
+        let index = (self.head + index) & self.index_mask;
+        unsafe { self.data.get_unchecked(index).assume_init_ref() }
+    }
+
+    #[inline]
+    pub fn get_mut(&mut self, index: usize) -> Option<&mut T> {
+        if index >= self.len() {
+            return None;
+        }
+
+        let index = (self.head + index) & self.index_mask;
+        // SAFETY: Due to mask, index is always in bounds
+        Some(unsafe { self.data.get_unchecked_mut(index).assume_init_mut() })
+    }
+
+    #[inline]
+    pub unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T {
+        let index = (self.head + index) & self.index_mask;
+        unsafe { self.data.get_unchecked_mut(index).assume_init_mut() }
     }
 
     #[inline]
@@ -136,6 +171,22 @@ impl<T, const N: usize> Drop for Queue<T, N> {
 impl<T, const N: usize> Default for Queue<T, N> {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl<T, const N: usize> Index<usize> for Queue<T, N> {
+    type Output = T;
+
+    #[inline]
+    fn index(&self, index: usize) -> &Self::Output {
+        self.get(index).unwrap()
+    }
+}
+
+impl<T, const N: usize> IndexMut<usize> for Queue<T, N> {
+    #[inline]
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        self.get_mut(index).unwrap()
     }
 }
 
