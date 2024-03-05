@@ -81,7 +81,7 @@ impl<T, const N: usize> Queue<T, N> {
     }
 
     #[inline]
-    pub fn push_back(&mut self, value: T) {
+    pub fn push(&mut self, value: T) {
         if self.len() == N {
             panic!("Queue is full");
         }
@@ -96,7 +96,7 @@ impl<T, const N: usize> Queue<T, N> {
     }
 
     #[inline]
-    pub fn pop_front(&mut self) -> Option<T> {
+    pub fn pop(&mut self) -> Option<T> {
         if self.is_empty() {
             return None;
         }
@@ -198,25 +198,25 @@ mod tests {
     fn test_push_pop() {
         let mut queue: Queue<u32, 5> = Queue::new();
         assert!(queue.is_empty());
-        queue.push_back(1);
-        queue.push_back(2);
-        queue.push_back(3);
-        queue.push_back(4);
+        queue.push(1);
+        queue.push(2);
+        queue.push(3);
+        queue.push(4);
         assert_eq!(queue.len(), 4);
-        assert_eq!(queue.pop_front(), Some(1));
-        assert_eq!(queue.pop_front(), Some(2));
-        assert_eq!(queue.pop_front(), Some(3));
-        assert_eq!(queue.pop_front(), Some(4));
+        assert_eq!(queue.pop(), Some(1));
+        assert_eq!(queue.pop(), Some(2));
+        assert_eq!(queue.pop(), Some(3));
+        assert_eq!(queue.pop(), Some(4));
         assert!(queue.is_empty());
-        assert_eq!(queue.pop_front(), None);
+        assert_eq!(queue.pop(), None);
         assert!(queue.is_empty());
     }
 
     #[test]
     fn test_clear() {
         let mut queue: Queue<u32, 4> = Queue::new();
-        queue.push_back(1);
-        queue.push_back(2);
+        queue.push(1);
+        queue.push(2);
         queue.clear();
         assert!(queue.is_empty());
     }
@@ -224,48 +224,70 @@ mod tests {
     #[test]
     fn test_not_empty() {
         let mut queue: Queue<u32, 4> = Queue::new();
-        queue.push_back(1);
+        queue.push(1);
         assert!(!queue.is_empty());
-        queue.push_back(2);
+        queue.push(2);
         assert!(!queue.is_empty());
-        queue.push_back(3);
+        queue.push(3);
         assert!(!queue.is_empty());
-        queue.push_back(4);
+        queue.push(4);
         assert!(!queue.is_empty());
     }
 
     #[test]
     fn push_empty() {
         let mut queue: Queue<u32, 4> = Queue::new();
-        queue.push_back(1);
-        assert_eq!(queue.pop_front(), Some(1));
+        queue.push(1);
+        assert_eq!(queue.pop(), Some(1));
         assert!(queue.is_empty());
+    }
+
+    #[test]
+    fn test_get() {
+        let mut queue: Queue<u32, 4> = Queue::new();
+        queue.push(1);
+        queue.push(2);
+        queue.push(3);
+        assert_eq!(queue.get(0), Some(&1));
+        assert_eq!(queue.get(1), Some(&2));
+        assert_eq!(queue.get(2), Some(&3));
+        assert_eq!(queue.get(3), None);
+
+        queue.pop();
+        assert_eq!(queue.get(0), Some(&2));
+
+        queue.push(4);
+        queue.push(5);
+        assert_eq!(queue.get(0), Some(&2));
+        assert_eq!(queue.get(1), Some(&3));
+        assert_eq!(queue.get(2), Some(&4));
+        assert_eq!(queue.get(3), Some(&5));
     }
 
     #[test]
     fn test_as_slices() {
         let mut queue: Queue<u32, 4> = Queue::new();
-        queue.push_back(1);
-        queue.push_back(2);
-        queue.push_back(3);
-        queue.push_back(4);
+        queue.push(1);
+        queue.push(2);
+        queue.push(3);
+        queue.push(4);
         let (first, second) = queue.as_slices();
         assert_eq!(first, &[1, 2, 3, 4]);
         assert_eq!(second, &[]);
-        queue.pop_front();
-        queue.pop_front();
+        queue.pop();
+        queue.pop();
         let (first, second) = queue.as_slices();
         assert_eq!(first, &[3, 4]);
         assert_eq!(second, &[]);
-        queue.push_back(5);
-        queue.push_back(6);
+        queue.push(5);
+        queue.push(6);
         let (first, second) = queue.as_slices();
         assert_eq!(first, &[3, 4]);
         assert_eq!(second, &[5, 6]);
-        queue.pop_front();
-        queue.pop_front();
-        queue.pop_front();
-        queue.pop_front();
+        queue.pop();
+        queue.pop();
+        queue.pop();
+        queue.pop();
         let (first, second) = queue.as_slices();
         assert_eq!(first, &[]);
         assert_eq!(second, &[]);
@@ -275,10 +297,10 @@ mod tests {
     #[should_panic]
     fn test_push_full() {
         let mut queue: Queue<u32, 4> = Queue::new();
-        queue.push_back(1);
-        queue.push_back(2);
-        queue.push_back(3);
-        queue.push_back(4);
-        queue.push_back(5);
+        queue.push(1);
+        queue.push(2);
+        queue.push(3);
+        queue.push(4);
+        queue.push(5);
     }
 }
