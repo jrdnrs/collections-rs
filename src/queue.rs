@@ -7,20 +7,14 @@ pub struct Queue<T, const N: usize> {
     head: usize,
     /// Non-wrapping index of the next available slot
     tail: usize,
-    index_mask: usize,
 }
 
 impl<T, const N: usize> Queue<T, N> {
     pub fn new() -> Self {
-        if !N.is_power_of_two() {
-            panic!("Queue size must be a power of two");
-        }
-
         Self {
             data: unsafe { core::mem::MaybeUninit::uninit().assume_init() },
             head: 0,
             tail: 0,
-            index_mask: N - 1,
         }
     }
 
@@ -58,14 +52,14 @@ impl<T, const N: usize> Queue<T, N> {
             return None;
         }
 
-        let index = (self.head + index) & self.index_mask;
+        let index = (self.head + index) % N;
         // SAFETY: Due to mask, index is always in bounds
         Some(unsafe { self.data.get_unchecked(index).assume_init_ref() })
     }
 
     #[inline]
     pub unsafe fn get_unchecked(&self, index: usize) -> &T {
-        let index = (self.head + index) & self.index_mask;
+        let index = (self.head + index) % N;
         unsafe { self.data.get_unchecked(index).assume_init_ref() }
     }
 
@@ -75,14 +69,14 @@ impl<T, const N: usize> Queue<T, N> {
             return None;
         }
 
-        let index = (self.head + index) & self.index_mask;
+        let index = (self.head + index) % N;
         // SAFETY: Due to mask, index is always in bounds
         Some(unsafe { self.data.get_unchecked_mut(index).assume_init_mut() })
     }
 
     #[inline]
     pub unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T {
-        let index = (self.head + index) & self.index_mask;
+        let index = (self.head + index) % N;
         unsafe { self.data.get_unchecked_mut(index).assume_init_mut() }
     }
 
@@ -92,7 +86,7 @@ impl<T, const N: usize> Queue<T, N> {
             panic!("Queue is full");
         }
 
-        let index = self.tail & self.index_mask;
+        let index = self.tail % N;
         self.tail = self.tail.wrapping_add(1);
 
         // SAFETY: Due to mask, index is always in bounds
@@ -107,7 +101,7 @@ impl<T, const N: usize> Queue<T, N> {
             return None;
         }
 
-        let index = self.head & self.index_mask;
+        let index = self.head % N;
         self.head = self.head.wrapping_add(1);
 
         // SAFETY:
@@ -122,7 +116,7 @@ impl<T, const N: usize> Queue<T, N> {
             return (&[], &[]);
         }
 
-        let wrapped_head = self.head & self.index_mask;
+        let wrapped_head = self.head % N;
         let len = self.len();
         let head_len = (N - wrapped_head).min(len);
         let tail_len = len - head_len;
@@ -143,7 +137,7 @@ impl<T, const N: usize> Queue<T, N> {
             return (&mut [], &mut []);
         }
 
-        let wrapped_head = self.head & self.index_mask;
+        let wrapped_head = self.head % N;
         let len = self.len();
         let head_len = (N - wrapped_head).min(len);
         let tail_len = len - head_len;
@@ -202,7 +196,7 @@ mod tests {
 
     #[test]
     fn test_push_pop() {
-        let mut queue: Queue<u32, 4> = Queue::new();
+        let mut queue: Queue<u32, 5> = Queue::new();
         assert!(queue.is_empty());
         queue.push_back(1);
         queue.push_back(2);
@@ -213,6 +207,8 @@ mod tests {
         assert_eq!(queue.pop_front(), Some(2));
         assert_eq!(queue.pop_front(), Some(3));
         assert_eq!(queue.pop_front(), Some(4));
+        assert!(queue.is_empty());
+        assert_eq!(queue.pop_front(), None);
         assert!(queue.is_empty());
     }
 
@@ -273,12 +269,6 @@ mod tests {
         let (first, second) = queue.as_slices();
         assert_eq!(first, &[]);
         assert_eq!(second, &[]);
-    }
-
-    #[test]
-    #[should_panic]
-    fn not_power_of_two() {
-        let _queue: Queue<u32, 3> = Queue::new();
     }
 
     #[test]
