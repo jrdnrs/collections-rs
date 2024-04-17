@@ -17,3 +17,6 @@ Dense vec with reuse of empty slots using generational indices
 
 #### ArrayQueue
 Simple queue using a fixed length array
+
+#### SPSC Channel
+Lock/Wait-free bounded queue with a single producer/consumer
