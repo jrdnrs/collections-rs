@@ -1,7 +1,7 @@
 use core::mem::MaybeUninit;
 use std::ops::{Index, IndexMut};
 
-pub struct Queue<T, const N: usize> {
+pub struct ArrayQueue<T, const N: usize> {
     data: [MaybeUninit<T>; N],
     /// Non-wrapping index of the item to be removed next
     head: usize,
@@ -9,7 +9,7 @@ pub struct Queue<T, const N: usize> {
     tail: usize,
 }
 
-impl<T, const N: usize> Queue<T, N> {
+impl<T, const N: usize> ArrayQueue<T, N> {
     pub fn new() -> Self {
         Self {
             data: unsafe { core::mem::MaybeUninit::uninit().assume_init() },
@@ -156,19 +156,19 @@ impl<T, const N: usize> Queue<T, N> {
     }
 }
 
-impl<T, const N: usize> Drop for Queue<T, N> {
+impl<T, const N: usize> Drop for ArrayQueue<T, N> {
     fn drop(&mut self) {
         self.clear();
     }
 }
 
-impl<T, const N: usize> Default for Queue<T, N> {
+impl<T, const N: usize> Default for ArrayQueue<T, N> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T, const N: usize> Index<usize> for Queue<T, N> {
+impl<T, const N: usize> Index<usize> for ArrayQueue<T, N> {
     type Output = T;
 
     #[inline]
@@ -177,7 +177,7 @@ impl<T, const N: usize> Index<usize> for Queue<T, N> {
     }
 }
 
-impl<T, const N: usize> IndexMut<usize> for Queue<T, N> {
+impl<T, const N: usize> IndexMut<usize> for ArrayQueue<T, N> {
     #[inline]
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         self.get_mut(index).unwrap()
@@ -190,13 +190,13 @@ mod tests {
 
     #[test]
     fn test_new() {
-        let queue: Queue<u32, 4> = Queue::new();
+        let queue: ArrayQueue<u32, 4> = ArrayQueue::new();
         assert!(queue.is_empty());
     }
 
     #[test]
     fn test_push_pop() {
-        let mut queue: Queue<u32, 5> = Queue::new();
+        let mut queue: ArrayQueue<u32, 5> = ArrayQueue::new();
         assert!(queue.is_empty());
         queue.push(1);
         queue.push(2);
@@ -214,7 +214,7 @@ mod tests {
 
     #[test]
     fn test_clear() {
-        let mut queue: Queue<u32, 4> = Queue::new();
+        let mut queue: ArrayQueue<u32, 4> = ArrayQueue::new();
         queue.push(1);
         queue.push(2);
         queue.clear();
@@ -223,7 +223,7 @@ mod tests {
 
     #[test]
     fn test_not_empty() {
-        let mut queue: Queue<u32, 4> = Queue::new();
+        let mut queue: ArrayQueue<u32, 4> = ArrayQueue::new();
         queue.push(1);
         assert!(!queue.is_empty());
         queue.push(2);
@@ -236,7 +236,7 @@ mod tests {
 
     #[test]
     fn push_empty() {
-        let mut queue: Queue<u32, 4> = Queue::new();
+        let mut queue: ArrayQueue<u32, 4> = ArrayQueue::new();
         queue.push(1);
         assert_eq!(queue.pop(), Some(1));
         assert!(queue.is_empty());
@@ -244,7 +244,7 @@ mod tests {
 
     #[test]
     fn test_get() {
-        let mut queue: Queue<u32, 4> = Queue::new();
+        let mut queue: ArrayQueue<u32, 4> = ArrayQueue::new();
         queue.push(1);
         queue.push(2);
         queue.push(3);
@@ -266,7 +266,7 @@ mod tests {
 
     #[test]
     fn test_as_slices() {
-        let mut queue: Queue<u32, 4> = Queue::new();
+        let mut queue: ArrayQueue<u32, 4> = ArrayQueue::new();
         queue.push(1);
         queue.push(2);
         queue.push(3);
@@ -296,7 +296,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_push_full() {
-        let mut queue: Queue<u32, 4> = Queue::new();
+        let mut queue: ArrayQueue<u32, 4> = ArrayQueue::new();
         queue.push(1);
         queue.push(2);
         queue.push(3);

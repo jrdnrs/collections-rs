@@ -3,12 +3,12 @@ use core::{
     ops::{Index, IndexMut},
 };
 
-pub struct FixedVec<T, const N: usize> {
+pub struct ArrayVec<T, const N: usize> {
     data: [MaybeUninit<T>; N],
     len: usize,
 }
 
-impl<T, const N: usize> FixedVec<T, N> {
+impl<T, const N: usize> ArrayVec<T, N> {
     pub fn new() -> Self {
         Self {
             data: unsafe { MaybeUninit::uninit().assume_init() },
@@ -164,19 +164,19 @@ impl<T, const N: usize> FixedVec<T, N> {
     }
 }
 
-impl<T, const N: usize> Drop for FixedVec<T, N> {
+impl<T, const N: usize> Drop for ArrayVec<T, N> {
     fn drop(&mut self) {
         self.clear();
     }
 }
 
-impl<T, const N: usize> Default for FixedVec<T, N> {
+impl<T, const N: usize> Default for ArrayVec<T, N> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T, const N: usize> Index<usize> for FixedVec<T, N> {
+impl<T, const N: usize> Index<usize> for ArrayVec<T, N> {
     type Output = T;
 
     #[inline]
@@ -185,7 +185,7 @@ impl<T, const N: usize> Index<usize> for FixedVec<T, N> {
     }
 }
 
-impl<T, const N: usize> IndexMut<usize> for FixedVec<T, N> {
+impl<T, const N: usize> IndexMut<usize> for ArrayVec<T, N> {
     #[inline]
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         self.get_mut(index).unwrap()
@@ -198,7 +198,7 @@ mod test {
 
     #[test]
     fn test_push_pop() {
-        let mut vec = FixedVec::<u32, 4>::new();
+        let mut vec = ArrayVec::<u32, 4>::new();
 
         vec.push(1);
         vec.push(2);
@@ -217,7 +217,7 @@ mod test {
 
     #[test]
     fn test_swap_remove() {
-        let mut vec = FixedVec::<u32, 4>::new();
+        let mut vec = ArrayVec::<u32, 4>::new();
 
         vec.push(1);
         vec.push(2);
@@ -239,7 +239,7 @@ mod test {
 
     #[test]
     fn test_clear() {
-        let mut vec = FixedVec::<u32, 4>::new();
+        let mut vec = ArrayVec::<u32, 4>::new();
 
         vec.push(1);
         vec.push(2);
@@ -253,7 +253,7 @@ mod test {
 
     #[test]
     fn test_iter() {
-        let mut vec = FixedVec::<u32, 4>::new();
+        let mut vec = ArrayVec::<u32, 4>::new();
 
         vec.push(1);
         vec.push(2);
@@ -272,7 +272,7 @@ mod test {
     #[test]
     #[should_panic]
     fn test_push_full() {
-        let mut vec = FixedVec::<u32, 4>::new();
+        let mut vec = ArrayVec::<u32, 4>::new();
 
         vec.push(1);
         vec.push(2);
