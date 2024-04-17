@@ -142,15 +142,12 @@ impl<T, const N: usize> ArrayQueue<T, N> {
         let head_len = (N - wrapped_head).min(len);
         let tail_len = len - head_len;
 
-        let first = unsafe {
-            core::slice::from_raw_parts_mut(
-                self.data.as_mut_ptr().add(wrapped_head) as *mut T,
-                head_len,
-            )
-        };
+        let ptr = self.data.as_mut_ptr() as *mut T;
 
-        let second =
-            unsafe { core::slice::from_raw_parts_mut(self.data.as_mut_ptr() as *mut T, tail_len) };
+        let first =
+            unsafe { core::slice::from_raw_parts_mut(ptr.add(wrapped_head) as *mut T, head_len) };
+
+        let second = unsafe { core::slice::from_raw_parts_mut(ptr, tail_len) };
 
         (first, second)
     }
