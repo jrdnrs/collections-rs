@@ -20,7 +20,7 @@ impl<T, const N: usize> ArrayQueue<T, N> {
 
     #[inline]
     pub fn len(&self) -> usize {
-        self.tail.wrapping_sub(self.head)
+        self.tail - self.head
     }
 
     #[inline]
@@ -84,30 +84,43 @@ impl<T, const N: usize> ArrayQueue<T, N> {
     pub fn push(&mut self, value: T) {
         if self.len() == N {
             panic!("Queue is full");
+        } else {
+            // SAFETY: Due to mask, index is always in bounds
+            unsafe { self.push_unchecked(value) }
+        }
+    }
+
+    #[inline]
+    pub fn try_push(&mut self, value: T) -> Result<(), T> {
+        if self.len() == N {
+            Err(value)
+        } else {
+            // SAFETY: Due to mask, index is always in bounds
+            Ok(unsafe { self.push_unchecked(value) })
+        }
+    }
+
+    #[inline]
+    pub fn force_push(&mut self, value: T) {
+        if self.len() == N {
+            // SAFETY: Can't be empty if it's full...
+            unsafe { self.pop_unchecked() };
         }
 
-        let index = self.tail % N;
-        self.tail = self.tail.wrapping_add(1);
-
-        // SAFETY: Due to mask, index is always in bounds
-        unsafe {
-            *self.data.get_unchecked_mut(index) = MaybeUninit::new(value);
-        }
+        // SAFETY: Due to mask, index is always in bounds, and pop will make space if needed
+        unsafe { self.push_unchecked(value) }
     }
 
     #[inline]
     pub fn pop(&mut self) -> Option<T> {
         if self.is_empty() {
-            return None;
+            None
+        } else {
+            // SAFETY:
+            // - Due to mask, index is always in bounds
+            // - Management of head means it always points to a valid location, as long as the queue is not empty
+            Some(unsafe { self.pop_unchecked() })
         }
-
-        let index = self.head % N;
-        self.head = self.head.wrapping_add(1);
-
-        // SAFETY:
-        // - Due to mask, index is always in bounds
-        // - Management of head means it always points to a valid location, as long as the queue is not empty
-        Some(unsafe { self.data.get_unchecked_mut(index).assume_init_read() })
     }
 
     #[inline]
@@ -150,6 +163,20 @@ impl<T, const N: usize> ArrayQueue<T, N> {
         let second = unsafe { core::slice::from_raw_parts_mut(ptr, tail_len) };
 
         (first, second)
+    }
+
+    #[inline(always)]
+    unsafe fn pop_unchecked(&mut self) -> T {
+        let index = self.head % N;
+        self.head = self.head.wrapping_add(1);
+        self.data.get_unchecked_mut(index).assume_init_read()
+    }
+
+    #[inline(always)]
+    unsafe fn push_unchecked(&mut self, value: T) {
+        let index = self.tail % N;
+        self.tail = self.tail.wrapping_add(1);
+        *self.data.get_unchecked_mut(index) = MaybeUninit::new(value);
     }
 }
 
