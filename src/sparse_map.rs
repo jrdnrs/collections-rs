@@ -43,6 +43,23 @@ impl<T> SparseMap<T> {
         }
     }
 
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.items.len()
+    }
+
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.items.is_empty()
+    }
+
+    #[inline]
+    pub fn clear(&mut self) {
+        self.items.clear();
+        self.keys.clear();
+        self.indices.clear();
+    }
+
     /// Applies bounds check
     fn get_index(&self, key: usize) -> Index {
         if key >= self.indices.len() {
